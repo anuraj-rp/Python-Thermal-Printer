@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
 from Tkinter import *
+import tkMessageBox
 
 from Adafruit_Thermal import *
+
+import datetime
 
 class ThermalPrinterApp:
 
@@ -108,8 +111,7 @@ class ThermalPrinterApp:
     #Layout Managment End
 
     self.entries = {} #Dictionary for Storing Entries in the Widgets
-
-
+    self.printer = Adafruit_Thermal("/dev/ttyUSB0", 19200, timeout=5)
 
   def fetch_entries(self):
     self.entries['receiver'] = self.name_entry.get()
@@ -117,15 +119,42 @@ class ThermalPrinterApp:
     self.entries['amount'] = self.amount_entry.get()
     print self.entries
 
-    
+  def print_ESN_constants(self):
+    self.printer.feed(1)
+    self.printer.justify('C')
+    self.printer.boldOn()
+    self.printer.println("ESN OULU ry")
+    self.printer.boldOff()
+    self.printer.println("http://web.esnoulu.org")
+    self.printer.println("Reg No(Y-tunnus): 2660271-2")
+    now = datetime.datetime.now()
+    self.printer.println(now.ctime())
+    self.printer.feed(1)
+
   def print_receipt_click(self):
     self.fetch_entries()
-    print "printing "
-    #TODO 
-    #Adding Printing methods from driver
+    if tkMessageBox.askyesno("Print", "Print Receipt?"):
+      print "printing "
+      self.print_ESN_constants()
+      self.printer.justify('L')
+
+      dotNo = self.printer.maxColumn - len('Name -') - len(self.entries['receiver'])
+      self.printer.println("Name -" + "."*dotNo + self.entries['receiver'])
+
+      dotNo = self.printer.maxColumn - len('Event -') - len(self.entries['trans_name'])
+      self.printer.println("Event -" + "."*dotNo + self.entries['trans_name'])
+
+      dotNo = self.printer.maxColumn - len('Amount -') - len(self.entries['amount']) - len("Eur ")
+      self.printer.println("Amount -" + "."*dotNo + "Eur " + self.entries['amount'])
+
+      self.printer.println("-"*30)
+      self.printer.println("Thank You")
+      self.printer.feed(2)
+
 
   def cancel_button_click(self):
-    self.myParent.destroy()
+    if tkMessageBox.askyesno("Quit Program", "Quit?"):
+      self.myParent.destroy()
    
 
 
