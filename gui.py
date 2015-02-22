@@ -5,6 +5,8 @@ import tkMessageBox
 
 from Adafruit_Thermal import *
 
+import serial, sys
+
 import datetime
 
 class ThermalPrinterApp:
@@ -25,6 +27,8 @@ class ThermalPrinterApp:
 
     #Layout Managment Start
     self.myParent = parent
+    self.myParent.title("ESN Receipt Printer")
+    self.myParent.report_callback_exception = self.show_error
     self.myParent.geometry("320x200")
 
     self.myContainer1 = Frame(parent)
@@ -111,7 +115,10 @@ class ThermalPrinterApp:
     #Layout Managment End
 
     self.entries = {} #Dictionary for Storing Entries in the Widgets
-    self.printer = Adafruit_Thermal("/dev/ttyUSB0", 19200, timeout=5)
+    try:
+      self.printer = Adafruit_Thermal("/dev/ttyUSB0", 19200, timeout=5)
+    except serial.SerialException,e:
+      self.show_error(e)
 
   def fetch_entries(self):
     self.entries['receiver'] = self.name_entry.get()
@@ -155,6 +162,11 @@ class ThermalPrinterApp:
   def cancel_button_click(self):
     if tkMessageBox.askyesno("Quit Program", "Quit?"):
       self.myParent.destroy()
+
+  def show_error(self, *args):
+    #err = traceback.format_exception(*args)
+    tkMessageBox.showerror('Error', "Printer Not Found")
+    sys.exit(0)
    
 
 
